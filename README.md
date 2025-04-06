@@ -93,12 +93,4 @@ CodeSight-AI is a powerful tool that uses Google's Gemini AI to analyze and revi
 
 ## 🎥 Demo
 
-![Demo GIF](https://via.placeholder.com/800x450/252525/7e57c2?text=CodeSight-AI+Demo)
-
-## 📄 License
-
-MIT
-
----
-
-Made with ❤️ by [Your Name]
+https://github.com/PranavB6/CodeSight-AI/assets/46335518/CodeSightAI.mp4
