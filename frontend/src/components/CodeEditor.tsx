@@ -12,26 +12,69 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlighterRef = useRef<HTMLDivElement>(null);
 
-  // Handle auto-completion for braces
+  // Handle auto-completion for various pairs
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "{") {
+    const pairs: Record<string, string> = {
+      "{": "}",
+      "(": ")",
+      "[": "]",
+      '"': '"',
+      "'": "'",
+      "`": "`",
+    };
+
+    const key = e.key;
+
+    // If the pressed key is one of our pair starters
+    if (key in pairs) {
       e.preventDefault();
       const textarea = e.currentTarget;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
-      const newCode = code.substring(0, start) + "{" + code.substring(end);
-      const newPosition = start + 1;
+      // Handle selected text (wrap it with pairs)
+      const selectedText = code.substring(start, end);
+      const newText = key + selectedText + pairs[key];
 
-      onChange(
-        newCode.substring(0, newPosition) + "}" + newCode.substring(newPosition)
-      );
+      // Create the new code with the pair
+      const newCode = code.substring(0, start) + newText + code.substring(end);
 
-      // Set cursor position between braces
+      onChange(newCode);
+
+      // Set cursor position appropriately
+      // If text was selected, place cursor after the selection and closing pair
+      // If no text was selected, place cursor between the pairs
       setTimeout(() => {
-        textarea.selectionStart = newPosition;
-        textarea.selectionEnd = newPosition;
+        if (selectedText) {
+          // Place cursor after the selected text but before closing pair
+          textarea.selectionStart = start + selectedText.length + 1;
+          textarea.selectionEnd = start + selectedText.length + 1;
+        } else {
+          // Place cursor between the pairs
+          textarea.selectionStart = start + 1;
+          textarea.selectionEnd = start + 1;
+        }
       }, 0);
+      return;
+    }
+
+    // Auto-close specific tags for HTML/JSX
+    if (key === "<") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      const newCode = code.substring(0, start) + "<" + code.substring(end);
+
+      onChange(newCode);
+
+      // Position cursor after the <
+      setTimeout(() => {
+        textarea.selectionStart = start + 1;
+        textarea.selectionEnd = start + 1;
+      }, 0);
+      return;
     }
   };
 
