@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Box } from "@mui/material";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -9,11 +9,48 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlighterRef = useRef<HTMLDivElement>(null);
+
+  // Handle auto-completion for braces
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "{") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      const newCode = code.substring(0, start) + "{" + code.substring(end);
+      const newPosition = start + 1;
+
+      onChange(
+        newCode.substring(0, newPosition) + "}" + newCode.substring(newPosition)
+      );
+
+      // Set cursor position between braces
+      setTimeout(() => {
+        textarea.selectionStart = newPosition;
+        textarea.selectionEnd = newPosition;
+      }, 0);
+    }
+  };
+
+  // Sync scrolling between textarea and syntax highlighter
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (highlighterRef.current) {
+      highlighterRef.current.scrollTop = e.currentTarget.scrollTop;
+      highlighterRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
   return (
     <Box sx={{ height: "100%", position: "relative" }}>
       <textarea
+        ref={textareaRef}
         value={code}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onScroll={handleScroll}
         className="code-input-area"
         spellCheck="false"
         data-gramm="false"
@@ -33,9 +70,14 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange }) => {
           fontFamily: '"Fira Code", Consolas, "Courier New", monospace',
           fontSize: "14px",
           lineHeight: 1.5,
+          overflowY: "auto",
+          resize: "none",
+          border: "none",
+          outline: "none",
         }}
       />
       <Box
+        ref={highlighterRef}
         sx={{
           position: "absolute",
           top: 0,
@@ -43,9 +85,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange }) => {
           width: "100%",
           height: "100%",
           padding: "0",
-          overflow: "hidden",
           pointerEvents: "none",
           zIndex: 1,
+          overflowY: "auto",
         }}
       >
         <SyntaxHighlighter
@@ -57,9 +99,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange }) => {
             background: "transparent",
             fontSize: "14px",
             lineHeight: 1.5,
-            height: "100%",
             fontFamily: '"Fira Code", Consolas, "Courier New", monospace',
-            overflowY: "hidden",
           }}
         >
           {code}
